@@ -1,0 +1,13 @@
+[Unit]
+Description=Check docker's 'ENV' on container startup
+After=shorewall.service
+After=crond.service
+After=webmin.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=no
+ExecStart=/containerstartup.sh
+
+[Install]
+WantedBy=multi-user.target
