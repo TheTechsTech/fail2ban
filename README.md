@@ -1,7 +1,7 @@
 # fail2ban for Docker
 
 Fail2Ban for docker environment. 
-Just mounting `-v /var/log:/var/log` in all `docker run` containers can protect your expose ports from abuse.
+Just mounting `-v /var/log:/var/log and -v /etc/hosts.deny:/etc/hosts.deny` in all `docker run` containers can protect your expose ports from abuse.
 
 This build has Webmin http://www.webmin.com/ installed to easy update underlining image and manage fail2ban. 
 It can be disable by passing `–e WEBMINPORT=off`
@@ -11,6 +11,8 @@ To run it:
 ```
 $ docker run --name fail2ban \
 -v /var/log:/var/log \
+-v /etc/hosts.deny:/etc/hosts.deny \
+-v fail2ban-etc:/etc/ \
 --net=host --restart=always \
 --cap-add=NET_ADMIN \
 --hostname=server.fail2ban.host \
