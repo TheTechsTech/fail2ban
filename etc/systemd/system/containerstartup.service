@@ -1,6 +1,8 @@
 [Unit]
 Description=Check docker's 'ENV' on container startup
-After=shorewall.service
+After=iptables.service
+After=denyhosts.service
+After=fail2ban.service
 After=crond.service
 After=webmin.service
 

@@ -153,7 +153,7 @@ port = 0:65535
 # iptables-multiport, shorewall, etc) It is used to define
 # action_* variables. Can be overridden globally or per
 # section within jail.local file
-banaction = shorewall
+banaction = iptables-multiport
 
 # The simplest action to take: ban only
 action_ = %(banaction)s[name=%(__name__)s, bantime="%(bantime)s", port="%(port)s", protocol="%(protocol)s", chain="%(chain)s"]
@@ -363,18 +363,18 @@ bantime = -1
 
 port    = http,https
 logpath = /var/log/nginx/access*.log
-enabled = false
+enabled = true
 filter = nginx-http-auth
-action = %(banaction)s[]
+action = %(banaction)s[name=nginx-http-auth, port="80,443", protocol=tcp]
 
 [nginx-botsearch]
 
 port     = http,https
 logpath = /var/log/nginx/access*.log
 maxretry = 2
-enabled = false
+enabled = true
 filter = nginx-botsearch
-action = %(banaction)s[]
+action = %(banaction)s[name=nginx-botsearch, port="80,443", protocol=tcp]
 
 # Ban attackers that try to use PHP's URL-fopen() functionality
 # through GET/POST variables. - Experimental, with more than a year
@@ -385,8 +385,9 @@ action = %(banaction)s[]
 port    = http,https
 logpath = /var/log/httpd/error_log
         /var/log/httpd/access_log
-enabled = false
+enabled = true
 filter = php-url-fopen
+action = %(banaction)s[name=php-url-fopen, port="80,443", protocol=tcp]
 
 
 [suhosin]
@@ -400,6 +401,7 @@ logpath = %(suhosin_log)s
 # It catches wrong authentifications
 port    = http,https
 logpath = %(lighttpd_error_log)s
+action = %(banaction)s[name=lighttpd-auth, port="80,443", protocol=tcp]
 
 
 #
@@ -413,6 +415,7 @@ logpath = /var/log/httpd/error_log
 enabled = false
 filter = roundcube-auth
 action = %(banaction)s[]
+action = %(banaction)s[name=roundcube-auth, port="80,443", protocol=tcp]
 
 
 [openwebmail]
@@ -477,7 +480,7 @@ logpath = /var/log/httpd/error_log
         /var/log/httpd/access_log
 enabled = true
 filter = webmin-auth
-action = %(banaction)s[name=webmin-auth-tcp, port=9000:9010, protocol=tcp]
+action = %(banaction)s[name=webmin-auth-tcp, port=10000:10010, protocol=tcp]
 
 
 [froxlor-auth]
@@ -674,7 +677,7 @@ port     = smtp,465,submission,imap3,imaps,pop3,pop3s
 logpath = /var/log/maillog
 enabled = true
 filter = postfix-sasl
-action = %(banaction)s[]
+action = %(banaction)s[name=postfix-sasl]
 bantime = -1
 maxretry = 3
 
@@ -683,24 +686,28 @@ maxretry = 3
 
 port   = imap3,imaps,pop3,pop3s
 logpath = %(syslog_mail)s
+action = %(banaction)s[name=perdition]
 
 
 [squirrelmail]
 
 port = smtp,465,submission,imap2,imap3,imaps,pop3,pop3s,http,https,socks
 logpath = /var/lib/squirrelmail/prefs/squirrelmail_access_log
+action = %(banaction)s[name=squirrelmail]
 
 
 [cyrus-imap]
 
 port   = imap3,imaps
 logpath = %(syslog_mail)s
+action = %(banaction)s[name=cyrus-imap]
 
 
 [uwimap-auth]
 
 port   = imap3,imaps
 logpath = %(syslog_mail)s
+action = %(banaction)s[name=uwimap-auth]
 
 
 #
@@ -735,7 +742,7 @@ port     = domain,953
 logpath  = /var/log/named/security.log
 enabled = false
 filter = named-refused
-action = hostsdeny[]
+action = %(banaction)s[name=named-refused]
 
 
 [nsd]
@@ -810,7 +817,7 @@ action = %(banaction)s[name=mysqld-auth, port=3306, protocol=tcp]
 [recidive]
 
 logpath = /var/log/fail2ban.log
-banaction = shorewall
+banaction = iptables-allports
 bantime = -1
 findtime = 86400
 enabled = true
@@ -825,7 +832,7 @@ maxretry = 2
 
 [pam-generic]
 # pam-generic filter can be customized to monitor specific subset of 'tty's
-banaction = shorewall
+banaction = iptables-allports
 logpath = /var/log/secure
 enabled = true
 filter = pam-generic
@@ -876,7 +883,7 @@ maxretry = 1
 enabled = false
 logpath = /opt/sun/comms/messaging64/log/mail.log_current
 maxretry = 6
-banaction = shorewall
+banaction = iptables-allports
 
 [directadmin]
 enabled = false
@@ -902,6 +909,7 @@ bantime      = 3600
 maxretry     = 1
 findtime     = 1
 enabled = false
+action = %(banaction)s[name=pass2allow-ftp, port="80,443", protocol=tcp]
 
 [apache-pass]
 enabled = false
@@ -916,27 +924,68 @@ logpath = /var/log/httpd/error_log
 
 #bantime  = 86400
 
-#[freeswitch-ip-udp]
-#enabled  = true
-#port     = 5060,5061,5080,5081
-#protocol = all
-#filter   = freeswitch-ip
-#logpath  = /var/log/freeswitch/freeswitch.log
-#action   = iptables-multiport[name=freeswitch-ip-udp, port="5060,5061,5080,5081", protocol=udp]
-#maxretry = 1
-#findtime = 30
-#bantime  = 86400
+[freeswitch-ip-udp]
+enabled  = false
+port     = 5060,5061,5080,5081
+protocol = all
+filter   = freeswitch-ip
+logpath  = /var/log/freeswitch/freeswitch.log
+action   = iptables-multiport[name=freeswitch-ip-udp, port="5060,5061,5080,5081", protocol=udp]
+maxretry = 1
+findtime = 30
+bantime  = 86400
 
 
-#[fusionpbx]
-#enabled  = true
-#port     = 80,443
-#protocol = tcp
-#filter   = fusionpbx
-#logpath  = /var/log/auth.log
-#action   = iptables-multiport[name=fusionpbx, port="http,https", protocol=tcp]
-#          sendmail-whois[name=fusionpbx, dest=root, sender=fail2ban@example.org] #no smtp server installed
-#maxretry = 10
+[fusionpbx]
+enabled  = false
+port     = 80,443
+protocol = tcp
+filter   = fusionpbx
+logpath  = /var/log/auth.log
+action   = iptables-multiport[name=fusionpbx, port="http,https", protocol=tcp]
+          sendmail-whois[name=fusionpbx, dest=root, sender=fail2ban@example.org] #no smtp server installed
+maxretry = 10
+
+[murmur]
+# AKA mumble-server
+port     = 64738
+action   = %(banaction)s[name=%(__name__)s-tcp, port="%(port)s", protocol=tcp, chain="%(chain)s", actname=%(banaction)s-tcp]
+           %(banaction)s[name=%(__name__)s-udp, port="%(port)s", protocol=udp, chain="%(chain)s", actname=%(banaction)s-udp]
+logpath  = /var/log/mumble-server/mumble-server.log
+
+[screensharingd]
+# For Mac OS Screen Sharing Service (VNC)
+logpath  = /var/log/system.log
+logencoding = utf-8
+
+[haproxy-http-auth]
+# HAProxy by default doesn't log to file you'll need to set it up to forward
+# logs to a syslog server which would then write them to disk.
+# See "haproxy-http-auth" filter for a brief cautionary note when setting
+# maxretry and findtime.
+logpath  = /var/log/haproxy.log
+
+[slapd]
+port    = ldap,ldaps
+filter  = slapd
+logpath = /var/log/slapd.log                                      
+action = %(banaction)s[name=slapd]
+
+[wordpress-hard]
+enabled = true
+port = all
+filter = wordpress-hard
+logpath = /var/log/secure
+maxretry = 1
+action = %(banaction)s[name=wordpress-hard]
+
+[wordpress-soft]
+enabled = true
+port = all
+filter = wordpress-soft
+logpath = /var/log/secure
+maxretry = 3
+action = %(banaction)s[name=wordpress-hard]
 
 [ast-cli-attck]                                                                                            
 enabled = true
@@ -960,3 +1009,4 @@ filter   = mor_ddos
 action = %(banaction)s[name=mor_ddos, port=5060, protocol=tcp]
 logpath = /var/log/httpd/error_log
 bantime = 3600
+
