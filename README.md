@@ -1,4 +1,4 @@
-# fail2ban & shorewall for Docker
+# fail2ban for Docker
 
 Fail2Ban for docker environment. 
 Just mounting `-v /var/log:/var/log` in all `docker run` containers can protect your expose ports from abuse.
