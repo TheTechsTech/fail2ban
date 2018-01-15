@@ -70,7 +70,7 @@ RUN mkdir -p /var/log/asterisk \
 
 RUN sed -i "s#10000#19999#" /etc/webmin/miniserv.conf \
 	&& systemctl.original disable sendmail.service \
-	&& systemctl.original enable iptables.service denyhosts.service fail2ban.service crond.service webmin.service containerstartup.service
+	&& systemctl.original enable iptables.service denyhosts.service fail2ban.service crond.service webmin.service containerstartup.service \
     && chmod +x /etc/containerstartup.sh \
     && mv -f /etc/containerstartup.sh /containerstartup.sh \
     && echo "root:fail2ban" | chpasswd
